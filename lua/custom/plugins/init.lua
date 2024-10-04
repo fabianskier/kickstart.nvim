@@ -3,171 +3,103 @@
 --
 -- See the kickstart.nvim README for more information
 
-vim.g.have_nerd_font = true
-vim.opt.expandtab = true
-vim.opt.hlsearch = true
-vim.opt.relativenumber = true
-vim.opt.shiftwidth = 2
-vim.opt.tabstop = 2
-vim.keymap.set('n', '<C-h>', '<cmd>TmuxNavigateLeft<CR>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<cmd>TmuxNavigateRight<CR>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<cmd>TmuxNavigateDown<CR>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<cmd>TmuxNavigateUp<CR>', { desc = 'Move focus to the upper window' })
-vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
-vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
-vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
-vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+-- Set basic Vim options
+vim.opt.expandtab = true -- Use spaces instead of tabs
+vim.opt.hlsearch = true -- Highlight search results
+vim.opt.relativenumber = true -- Show relative line numbers
+vim.opt.shiftwidth = 2 -- Number of spaces to use for each indentation
+vim.opt.tabstop = 2 -- Number of spaces tabs count for
+
+vim.keymap.set('n', '<leader>mp', ':MarkdownPreview<CR>', { desc = 'Start Markdown Preview' })
+vim.keymap.set('n', '<leader>ms', ':MarkdownPreviewStop<CR>', { desc = 'Stop Markdown Preview' })
+vim.keymap.set('n', '<leader>mt', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview' })
 
 return {
-  -- Highlight, edit, and navigate code
-  {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    main = 'nvim-treesitter.configs',
-    opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'elixir' }, -- Added elixir
-      auto_install = true,
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = { 'ruby', 'elixir' }, -- Added elixir
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
-  },
-
-  -- Git integration for buffers
-  {
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '┃' },
-        change = { text = '┃' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-        untracked = { text = '┆' },
-      },
-      signs_staged = {
-        add = { text = '┃' },
-        change = { text = '┃' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-        untracked = { text = '┆' },
-      },
-      signs_staged_enable = true,
-      current_line_blame = true,
-      current_line_blame_opts = {
-        virt_text = true,
-        virt_text_pos = 'eol',
-        delay = 1000, -- Delay before blame shows
-      },
-      current_line_blame_formatter = '  <author_time:%Y-%m-%d> <author> <summary>',
-      on_attach = function(bufnr)
-        local gitsigns = require 'gitsigns'
-
-        local function map(mode, l, r, opts)
-          opts = opts or {}
-          opts.buffer = bufnr
-          vim.keymap.set(mode, l, r, opts)
-        end
-
-        -- Toggle blame for the entire file
-        map('n', '<leader>fb', function()
-          gitsigns.toggle_current_line_blame()
-        end)
-      end,
-    },
-  },
-
-  -- File browser in the buffer
+  -- File browser in the buffer with Oil.nvim
+  -- This allows for navigating directories within the buffer, like a file explorer
   {
     'stevearc/oil.nvim',
-    dependencies = { { 'echasnovski/mini.icons', opts = {} } },
+    dependencies = { { 'echasnovski/mini.icons', opts = {} } }, -- Optional icon support
     config = function()
       require('oil').setup {
-        columns = { 'icon' },
+        columns = { 'icon' }, -- Show file icons
         view_options = {
-          show_hidden = true,
+          show_hidden = true, -- Show hidden files
         },
-        skip_confirm_for_simple_edits = false,
+        skip_confirm_for_simple_edits = false, -- Confirm edits
       }
 
+      -- Keymap to open Oil and navigate to the parent directory
       vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
     end,
   },
 
-  -- Theme plugin
+  -- Theme plugin: Catppuccin
+  -- Aesthetic theme setup with priority to load early
   {
     'catppuccin/nvim',
     name = 'catppuccin',
-    priority = 1000,
+    priority = 1000, -- Load theme before other plugins
     config = function()
       require('catppuccin').setup()
 
+      -- Set the color scheme to 'catppuccin-mocha'
       vim.cmd.colorscheme 'catppuccin-mocha'
     end,
   },
 
-  -- LSP configuration
-  {
-    'neovim/nvim-lspconfig',
-    dependencies = {
-      'williamboman/mason.nvim',
-      'williamboman/mason-lspconfig.nvim',
-      'WhoIsSethDaniel/mason-tool-installer.nvim',
-      'hrsh7th/cmp-nvim-lsp',
-    },
-    config = function()
-      local servers = {
-        elixirls = {
-          settings = {
-            elixirLS = {
-              dialyzerEnabled = false, -- Disables Dialyzer for faster performance
-              fetchDeps = false, -- Skip fetching dependencies when opening files
-            },
-          },
-        },
-      }
-
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
-
-      require('mason').setup()
-
-      local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, { 'elixirls' })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
-      require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
-    end,
-  },
-
-  -- Code formatter
-  {
-    'stevearc/conform.nvim',
-    opts = function(_, opts)
-      opts.formatters_by_ft = vim.tbl_deep_extend('force', opts.formatters_by_ft or {}, {
-        elixir = { 'mix format' }, -- Use mix format for Elixir files
-      })
-    end,
-  },
-
   -- Tmux navigator integration
+  -- Allows seamless navigation between Neovim and Tmux splits
   { 'christoomey/vim-tmux-navigator' },
 
-  -- Comment plugin
+  -- Comment plugin: Easy commenting
+  -- Use `gcc` to comment/uncomment lines or selections
   { 'numToStr/Comment.nvim', opts = {} },
 
-  -- Disable unused plugins
-  { 'folke/which-key.nvim', enabled = false },
-  { 'folke/tokyonight.nvim', enabled = false },
+  -- Neoclip clipboard manager with Telescope integration
+  -- Provides clipboard history with persistent storage
+  {
+    'AckslD/nvim-neoclip.lua',
+    dependencies = {
+      { 'nvim-telescope/telescope.nvim' }, -- Required for search functionality
+      { 'kkharji/sqlite.lua', module = 'sqlite' }, -- Optional for persistent history
+    },
+    config = function()
+      require('neoclip').setup {
+        history = 1000, -- Store up to 1000 entries in history
+        enable_persistent_history = true, -- Persist history between sessions
+        continuous_sync = true, -- Sync history continuously with SQLite
+        default_register = { '"', '+' }, -- Use the unnamed and system registers
+        preview = true, -- Show a preview of yanked items
+      }
+
+      -- Load the Neoclip extension for Telescope
+      require('telescope').load_extension 'neoclip'
+
+      -- Keymap to open Neoclip history with Telescope
+      vim.keymap.set('n', '<leader>sy', ':Telescope neoclip<CR>', { desc = 'Open Neoclip history with Telescope' })
+    end,
+  },
+
+  -- Preview markdown files in your browser directly from Neovim.
+  {
+    'iamcco/markdown-preview.nvim',
+    build = 'cd app && npm install', -- Install dependencies
+    ft = { 'markdown' }, -- Load the plugin only for markdown files
+    config = function()
+      vim.g.mkdp_auto_start = 1 -- Automatically start preview when opening markdown files
+    end,
+  },
+
+  {
+    'tpope/vim-dadbod',
+    dependencies = {
+      'kristijanhusak/vim-dadbod-ui', -- Optional: GUI-like interface
+      'kristijanhusak/vim-dadbod-completion', -- Optional: Autocompletion for SQL queries
+    },
+    config = function()
+      -- Optional settings and custom keymaps
+      vim.keymap.set('n', '<leader>db', ':DBUI<CR>', { desc = 'Open DBUI' })
+    end,
+  },
 }
