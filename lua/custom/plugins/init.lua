@@ -10,9 +10,25 @@ vim.opt.relativenumber = true -- Show relative line numbers
 vim.opt.shiftwidth = 2 -- Number of spaces to use for each indentation
 vim.opt.tabstop = 2 -- Number of spaces tabs count for
 
+-- Markdown preview
 vim.keymap.set('n', '<leader>mp', ':MarkdownPreview<CR>', { desc = 'Start Markdown Preview' })
 vim.keymap.set('n', '<leader>ms', ':MarkdownPreviewStop<CR>', { desc = 'Stop Markdown Preview' })
 vim.keymap.set('n', '<leader>mt', ':MarkdownPreviewToggle<CR>', { desc = 'Toggle Markdown Preview' })
+
+-- Keybinding to copy all the content of the current file to the system clipboard
+vim.api.nvim_set_keymap('n', '<leader>ya', 'ggVG"+y', { noremap = true, silent = true })
+
+-- Keybinding to copy the current file path to the clipboard
+vim.api.nvim_set_keymap('n', '<leader>cp', ':let @+=expand("%:p")<CR>', { noremap = true, silent = true })
+
+-- Lua function to open Finder (kept local)
+function Open_in_finder()
+  local file_path = vim.fn.expand '%:p:h' -- Get the directory of the current file
+  vim.fn.system { 'open', file_path } -- Open Finder at the file's directory
+end
+
+-- Keybinding that calls the local function
+vim.api.nvim_set_keymap('n', '<leader>of', ':lua Open_in_finder()<CR>', { noremap = true, silent = true })
 
 return {
   -- File browser in the buffer with Oil.nvim
