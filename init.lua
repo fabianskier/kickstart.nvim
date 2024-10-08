@@ -907,17 +907,38 @@ require('lazy').setup({
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
+      -- local statusline = require 'mini.statusline'
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      -- statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
       -- cursor location to LINE:COLUMN
       ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      -- statusline.section_location = function()
+      --   return '%2l:%-2v'
+      -- end
+      --
+      require('mini.statusline').setup {
+        content = {
+          active = function()
+            local mode, mode_hl = MiniStatusline.section_mode { trunc_width = 120 }
+            local filename = MiniStatusline.section_filename { trunc_width = 140 }
+
+            return MiniStatusline.combine_groups {
+              { hl = mode_hl, strings = { mode } }, -- Show mode (e.g., Normal, Insert)
+              '%<', -- Mark general truncate point
+              { hl = 'MiniStatuslineFilename', strings = { filename } }, -- Show filename
+              '%=', -- End left alignment
+            }
+          end,
+
+          inactive = function()
+            return '%#MiniStatuslineInactive# %f %m' -- For inactive windows, only show filename and modified status
+          end,
+        },
+        use_icons = true, -- Set to false if you don't want icons
+      }
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
