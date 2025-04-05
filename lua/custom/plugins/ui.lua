@@ -31,11 +31,49 @@ return {
           inc_rename = false,
           lsp_doc_border = false,
         },
+        views = {
+          cmdline_popup = {
+            position = {
+              row = '50%', -- vertical center
+              col = '50%', -- horizontal center
+            },
+            size = {
+              width = 60,
+              height = 'auto',
+            },
+            border = {
+              style = 'rounded',
+            },
+          },
+        },
         cmdline = {
           view = 'cmdline_popup',
         },
       }
       vim.notify = require 'notify'
+    end,
+  },
+  {
+    'echasnovski/mini.statusline',
+    config = function()
+      require('mini.statusline').setup {
+        content = {
+          active = function()
+            local mode, mode_hl = MiniStatusline.section_mode { trunc_width = 120 }
+            local diagnostics = MiniStatusline.section_diagnostics { trunc_width = 75 }
+            local filename = MiniStatusline.section_filename { trunc_width = 140 }
+
+            return MiniStatusline.combine_groups {
+              { hl = mode_hl, strings = { mode } },
+              '%<',
+              { hl = 'MiniStatuslineFilename', strings = { filename } },
+              '%=',
+              { strings = { diagnostics } },
+            }
+          end,
+        },
+        use_icons = true,
+      }
     end,
   },
 }
