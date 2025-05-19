@@ -51,5 +51,46 @@ return {
       vim.keymap.set('n', '<leader>db', ':DBUI<CR>', { desc = 'Open DBUI' })
     end,
   },
-}
+  {
+    'lewis6991/gitsigns.nvim',
+    opts = {
+      signs = {
+        add = { text = '+' },
+        change = { text = '~' },
+        delete = { text = '_' },
+        topdelete = { text = '‾' },
+        changedelete = { text = '~' },
+      },
+      signs_staged = {
+        add = { text = '┃' },
+        change = { text = '┃' },
+        delete = { text = '_' },
+        topdelete = { text = '‾' },
+        changedelete = { text = '~' },
+        untracked = { text = '┆' },
+      },
+      signs_staged_enable = true,
+      current_line_blame = true,
+      current_line_blame_opts = {
+        virt_text = true,
+        virt_text_pos = 'eol',
+        delay = 1000,
+      },
+      current_line_blame_formatter = '  <author_time:%Y-%m-%d> / <author> / <summary>',
+      on_attach = function(bufnr)
+        local gitsigns = require 'gitsigns'
 
+        local function map(mode, l, r, opts)
+          opts = opts or {}
+          opts.buffer = bufnr
+          vim.keymap.set(mode, l, r, opts)
+        end
+
+        -- Toggle blame for the entire file
+        map('n', '<leader>fb', function()
+          gitsigns.toggle_current_line_blame()
+        end)
+      end,
+    },
+  },
+}
